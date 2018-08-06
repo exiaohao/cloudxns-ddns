@@ -1,0 +1,6 @@
+ipython
+gunicorn
+gevent
+hug
+pyyaml
+python-etcd
