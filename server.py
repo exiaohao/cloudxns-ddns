@@ -1,4 +1,5 @@
 import etcd
+import logging
 import hug
 import yaml
 
@@ -13,6 +14,8 @@ from response import (
     json_success,
     json_error,
 )
+
+logger = logging.Logger(__name__)
 
 def get_config(name):
     with open(name) as f:
@@ -41,6 +44,10 @@ def update_domain_list(save_to_etcd=True, ttl=14400):
             value=domain_list, 
             ttl=ttl
         )
+
+    if ddns_config['enable_logs']:
+        logger.info('Updated domain list: {}'.format(domain_list))
+
     return domain_list
 
 def update_record_list(domain_id, save_to_etcd=True, ttl=7200):
@@ -67,15 +74,26 @@ def update_record_list(domain_id, save_to_etcd=True, ttl=7200):
             value=record_list,
             ttl=ttl,
         )
+
+    if ddns_config['enable_logs']:
+        logger.info('Updated domain_id={} record list: {}'.format(domain_id, record_list))
+
     return record_list 
 
 
 @hug.get('/')
 def welcome():
+    """
+    Default page
+    """
     return json_error("Method not allowed", 405)
+
 
 @hug.get('/update_addr')
 def update_addr(domain: str, sub_domain: str, ip_addr: str):
+    """
+    Update record
+    """
     try:
         domain_list = eval(etcd_client.get(DomainService.LIST).value)
     except EtcdKeyNotFound:
@@ -102,7 +120,7 @@ def update_addr(domain: str, sub_domain: str, ip_addr: str):
     for _record in record_list:
         if _record['host'] == sub_domain:
             if _record['value'] == ip_addr:
-                return json_success("Record not updated")
+                return json_success("Record not changed")
             result = cloudxns_client.update_record(
                 domain_id=domain_id,
                 record_id=_record['record_id'],
@@ -111,8 +129,12 @@ def update_addr(domain: str, sub_domain: str, ip_addr: str):
             )
             return json_success(result)
 
-    return json_success({"result": "Nothing to do", "record_list": record_list})
+    return json_success({"result": "Nothing to do",})
     
 
 def force_update():
-    pass
+    """
+    强行更新本地缓存
+    """
+    for item in update_domain_list():
+        update_record_list(item['id'])

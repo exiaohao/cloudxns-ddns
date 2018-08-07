@@ -28,19 +28,19 @@ class CloudXNS:
         self.api_key = api_key
         self.secret_key = secret_key
 
-    def _request_header(self, request_url, request_body):
+    def _request_header(self, request_url, request_body, method):
         """
         产生请求头
         :param request_url:
         :param request_body:
         :return: http request header
         """
-        if isinstance(request_body, dict):
+        if method == PUT:
+            request_params = str(json.dumps(request_body))
+        elif isinstance(request_body, dict):
             request_params = '?' + '&'.join(['{k}={v}'.format(k=k, v=v) for k, v in request_body.items()])
-        elif request_body is None:
-            request_params = ''
         else:
-            request_params = request_body
+            request_params = request_body or ''
 
         api_request_date = time.strftime('%a %b %d %H:%M:%S %Y', time.localtime())
         api_hmac_origin = self.api_key + request_url + request_params + api_request_date + self.secret_key
@@ -60,9 +60,9 @@ class CloudXNS:
         :return:
         """
         @functools.wraps(func)
-        def wrapper(self, request_url, request_body, disable_fmt=False, *args, **kwargs):
-            headers = self._request_header(request_url, request_body)
-            http_status, result = func(self, headers, request_url, request_body, *args, **kwargs)
+        def wrapper(self, request_url, request_body, method=GET, disable_fmt=False, *args, **kwargs):
+            headers = self._request_header(request_url, request_body, method)
+            http_status, result = func(self, headers, request_url, request_body, method, *args, **kwargs)
             if disable_fmt:
                 return result
 
@@ -78,6 +78,7 @@ class CloudXNS:
             if result['code'] != 1:
                 return {
                     'code': -1,
+                    'cloudxns_code': result['code'],
                     'http_status': http_status,
                     'message': result['message'],
                 }
@@ -87,7 +88,6 @@ class CloudXNS:
 
     @request_ctx
     def _request_api(self, headers, request_url, request_body, method=GET):
-        print(headers, request_url, request_body, method)
         """
         请求CloudXNS API
         :param headers:
@@ -112,7 +112,7 @@ class CloudXNS:
             elif method == PUT:
                 result = requests.put(
                     url=request_url,
-                    data=request_body,
+                    json=request_body,
                     headers=headers,
                 )
             elif method == DELETE:
@@ -135,7 +135,8 @@ class CloudXNS:
         """
         return self._request_api(
             request_url= __API_PATH__ + '/domain',
-            request_body='',
+            request_body=None,
+            method=GET,
         )
     
     def record_list(self, domain_id):
