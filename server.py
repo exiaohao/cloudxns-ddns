@@ -127,8 +127,8 @@ def update_addr(domain: str, sub_domain: str, ip_addr: str):
                 host=sub_domain,
                 value=ip_addr,
             )
+            update_record_list(domain_id)
             return json_success(result)
-
     return json_success({"result": "Nothing to do",})
     
 
