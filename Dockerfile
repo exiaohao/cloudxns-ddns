@@ -8,5 +8,5 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 RUN mkdir /code
 WORKDIR /code
 ADD requirements.txt /code/
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt -i https://pypi.douban.com/simple/
 ADD . /code/
