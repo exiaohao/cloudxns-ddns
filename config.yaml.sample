@@ -1,0 +1,9 @@
+enable_logs: true
+
+etcd:
+  host: etcd
+  port: 2379
+
+cloudxns:
+  api_key: 000000000000000000
+  secret_key: 000000000000000
