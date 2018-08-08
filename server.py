@@ -120,6 +120,8 @@ def update_addr(domain: str, sub_domain: str, ip_addr: str):
     for _record in record_list:
         if _record['host'] == sub_domain:
             if _record['value'] == ip_addr:
+                if ddns_config['enable_logs']:
+                    logger.info('Update {}.{} A [{}] passed, not changed'.format(sub_domain, domain, ip_addr))
                 return json_success("Record not changed")
             result = cloudxns_client.update_record(
                 domain_id=domain_id,
@@ -128,6 +130,8 @@ def update_addr(domain: str, sub_domain: str, ip_addr: str):
                 value=ip_addr,
             )
             update_record_list(domain_id)
+            if ddns_config['enable_logs']:
+                logger.info('Updated {}.{} A [{}] \t {}'.format(sub_domain, domain, ip_addr, result))
             return json_success(result)
     return json_success({"result": "Nothing to do",})
     
