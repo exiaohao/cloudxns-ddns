@@ -15,7 +15,7 @@ from response import (
     json_error,
 )
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger('gunicorn.error')
 
 def get_config(name):
     with open(name) as f:
