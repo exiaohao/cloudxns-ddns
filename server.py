@@ -56,7 +56,6 @@ def update_record_list(domain_id, save_to_etcd=True, ttl=7200):
     """
     record_list = []
     for record in cloudxns_client.record_list(domain_id):
-        print(record)
         if record['status'] != 'ok':
             continue
         if record['type'] not in ('A', 'AAAA',):
